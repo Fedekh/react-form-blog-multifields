@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from './Button';
 import Modale from './Modale';
 import ToastMessage from './ToastMessage';
@@ -8,7 +8,10 @@ export default function Form() {
 
     const situazioneIniziale = {
         nome: '',
-        cognome: ''
+        cognome: '',
+        isDeveloper: false,
+        paese: '',
+        tecnologie: []
     };
 
 
@@ -18,6 +21,8 @@ export default function Form() {
     const [mostraModale, setMostraModale] = useState(false);
     const [utentiTotali, setUtentiTotali] = useState([]);
     const [toastMessage, setToastMessage] = useState('');
+
+    const tecnologieDisponibili = ['Vue', 'php', 'react', 'laravel'];
 
     //tasto reset
     function handleReset() {
@@ -49,14 +54,50 @@ export default function Form() {
         const newUser = {
             id: id + 1,
             nome: nuovoUtente.nome,
-            cognome: nuovoUtente.cognome
+            cognome: nuovoUtente.cognome,
+            isDeveloper: nuovoUtente.isDeveloper,
+            paese: nuovoUtente.paese,
+            tecnologie: nuovoUtente.tecnologie,
         };
 
-        setUtentiTotali(quelliGiaEsistenti => [...quelliGiaEsistenti, newUser]);
+        setUtentiTotali((quelliGiaEsistenti) => [...quelliGiaEsistenti, newUser]);
         setId(id + 1);
         setNuovoUtente(situazioneIniziale);
         testoModale(`Utente ${newUser.nome} creato con successo`);
     }
+
+    //checkbox multiple
+    function handleCheckboxChange(e, tecnologia) {
+        const isChecked = e.target.checked;
+
+        setNuovoUtente((prev) => {
+            // Seleziona tecnologie esistenti o crea un array vuoto se non ci sono tecnologie
+            const tecnologiePrecedenti = prev.tecnologie || [];
+
+            if (isChecked) {
+                // Aggiungi la tecnologia se la checkbox è selezionata
+                return { ...prev, tecnologie: [...tecnologiePrecedenti, tecnologia] };
+            } else {
+                // Rimuovi la tecnologia se la checkbox non è selezionata
+                return { ...prev, tecnologie: tecnologiePrecedenti.filter((item) => item !== tecnologia) };
+            }
+        });
+    }
+
+    function handleCheckboxChangeModifica(e, tecnologia) {
+        const isChecked = e.target.checked;
+
+        setModificaUtente((prev) => {
+            const tecnologiePrecedenti = prev.tecnologie || [];
+
+            if (isChecked) {
+                return { ...prev, tecnologie: [...tecnologiePrecedenti, tecnologia] };
+            } else {
+                return { ...prev, tecnologie: tecnologiePrecedenti.filter((item) => item !== tecnologia) };
+            }
+        });
+    }
+
 
 
 
@@ -103,16 +144,24 @@ export default function Form() {
             return;
         }
 
-
         const newListaUtenti = utentiTotali.filter((elemento) => elemento.id !== id);
         console.log("Nuova lista utenti:", newListaUtenti);
 
         setUtentiTotali(newListaUtenti);
         setMostraModale(false);
         testoModale(`Utente ${user.nome} eliminato con successo`);
-
-
     }
+
+    // Nascondere il toast dopo 2 secondi
+    useEffect(() => {
+        if (toastMessage) {
+            const timeoutId = setTimeout(() => {
+                setToastMessage('');
+            }, 2000);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [toastMessage]);
 
 
 
@@ -120,7 +169,7 @@ export default function Form() {
         <div>
 
             {toastMessage && <ToastMessage text={toastMessage} />}
-            <div className='flex gap-4'>
+            <div className=''>
 
                 <form className='max-w-max' onSubmit={(e) => handleSubmit(e)} onReset={handleReset}>
 
@@ -130,6 +179,7 @@ export default function Form() {
                             onChange={(e) => setNuovoUtente(prevState => ({ ...prevState, nome: e.target.value }))}
                             value={nuovoUtente.nome}
                             id="nome"
+                            name='nome'
                             type="text"
                             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="Inserisci nome"
@@ -142,10 +192,69 @@ export default function Form() {
                             onChange={(e) => setNuovoUtente(prevState => ({ ...prevState, cognome: e.target.value }))}
                             value={nuovoUtente.cognome}
                             id="cognome"
+                            name='cognome'
                             type="text"
                             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             placeholder="Inserisci cognome"
                             required />
+                    </div>
+
+                    <div className="mb-5 ">
+                        <label htmlFor="isDeveloper" className="block text-sm font-medium text-gray-900 dark:text-white">
+                            <input
+                                className='mr-4'
+                                onChange={(e) => setNuovoUtente(prevState => ({ ...prevState, isDeveloper: e.target.checked }))}
+                                checked={nuovoUtente.isDeveloper}
+                                type="checkbox"
+                                name="isDeveloper"
+                                id="isDeveloper"
+                            />
+                            E' uno sviluppatore? </label>
+                    </div>
+
+
+                    {/* Select */}
+                    <div className="mb-5">
+                        <label htmlFor="countries" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Scegli un paese</label>
+                        <select
+                            id="countries"
+                            onChange={(e) => setNuovoUtente(prevState => ({ ...prevState, paese: e.target.value }))}
+                            value={nuovoUtente.paese}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            required
+                        >
+                            <option value="">Scegli un paese</option>
+                            <option value="US">United States</option>
+                            <option value="CA">Canada</option>
+                            <option value="FR">France</option>
+                            <option value="DE">Germany</option>
+                        </select>
+                    </div>
+
+                    {/* Checkbox multiple*/}
+                    <div className="mb-5">
+                        <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Tecnologie:</h3>
+                        <ul className="items-center px-3 w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            {tecnologieDisponibili.map((tecnologia) => {
+                                return (
+                                    <li key={tecnologia} className="w-full border-b border-gray-200 sm:border-b-0 sm:border-r dark:border-gray-600">
+                                        <div className="flex items-center ps-3">
+                                            <input
+                                                id={`${tecnologia}-checkbox-list`}
+                                                type="checkbox"
+                                                value={tecnologia}
+                                                checked={nuovoUtente.tecnologie.includes(tecnologia)}
+                                                onChange={(e) => handleCheckboxChange(e, tecnologia)}
+                                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
+                                            />
+                                            <label
+                                                htmlFor={`${tecnologia}-checkbox-list`}
+                                                className="w-full p-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{tecnologia}</label>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
                     </div>
 
                     <div className='flex gap-3'>
@@ -157,15 +266,14 @@ export default function Form() {
                 </form>
 
                 <ul>
-                    {!utentiTotali.length ?
-                        <h2 className='text-red-700'>Nessun utente registrato</h2>
-                        :
-                        <h2 className='text-red-700'>Lista partecipanti : {utentiTotali.length}</h2>
-                    }
-
+                    <h2 className='text-red-700 mt-4'>
+                        {!utentiTotali.length ?
+                            ' Nessun utente registrato' : `Lista partecipanti : ${utentiTotali.length}`
+                        }
+                    </h2>
                     {utentiTotali.map((utente) => (
                         <li key={utente.id}>
-                            <div className='flex gap-4 justify-between my-3'>
+                            <div className='mt-4'>
                                 {modificaUtente && modificaUtente.id === utente.id ? (
                                     <>
                                         <input
@@ -180,6 +288,57 @@ export default function Form() {
                                             value={modificaUtente.cognome}
                                             onChange={(e) => setModificaUtente((prev) => ({ ...prev, cognome: e.target.value }))}
                                         />
+
+                                        <div >
+                                            <label htmlFor="isDeveloper" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">E' uno sviluppatore?</label>
+                                            <input
+                                                onChange={(e) => setModificaUtente(prevState => ({ ...prevState, isDeveloper: e.target.checked }))}
+                                                checked={modificaUtente.isDeveloper}
+                                                type="checkbox"
+                                                name="isDeveloper"
+                                                id="isDeveloper"
+                                            />
+                                        </div>
+
+                                        <div className="mb-5">
+                                            <label htmlFor="countries" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Scegli un paese</label>
+                                            <select
+                                                id="countries"
+                                                onChange={(e) => setModificaUtente(prevState => ({ ...prevState, paese: e.target.value }))}
+                                                value={modificaUtente.paese}
+                                                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                                required
+                                            >
+                                                <option value="US">United States</option>
+                                                <option value="CA">Canada</option>
+                                                <option value="FR">France</option>
+                                                <option value="DE">Germany</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Checkbox multiple*/}
+                                        <div className="mb-5">
+                                            <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Tecnologie:</h3>
+                                            <ul className="items-center px-3 w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                                {tecnologieDisponibili.map((tecnologia, i) => (
+                                                    <li key={i} className="w-full border-b border-gray-200 sm:border-b-0 sm:border-r dark:border-gray-600">
+                                                        <div className="flex items-center ps-3">
+                                                            <input
+                                                                id={`${tecnologia}-checkbox-list`}
+                                                                type="checkbox"
+                                                                value={tecnologia}
+                                                                checked={modificaUtente.tecnologie.includes(tecnologia)}
+                                                                onChange={(e) => handleCheckboxChangeModifica(e, tecnologia)}
+                                                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
+                                                            />
+                                                            <label
+                                                                htmlFor={`${tecnologia}-checkbox-list`}
+                                                                className="w-full p-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{tecnologia}</label>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                         <Button
                                             alClick={() => confermaModifica()}
                                             colore="green"
@@ -194,8 +353,10 @@ export default function Form() {
                                 ) : (
                                     <>
                                         <p>
-                                            {utente.nome} - {utente.cognome}
+                                            {utente.nome} - {utente.cognome} - {utente.isDeveloper ? 'E\' un dev' : 'Non è un dev'} - viene da {(utente.paese)} e
+                                            {utente.tecnologie.length > 0 ? ` conosce ${utente.tecnologie.join(', ')}` : " Non conosce na sega"}
                                         </p>
+
 
                                         {mostraModale &&
                                             <Modale
@@ -224,7 +385,7 @@ export default function Form() {
                     ))}
                 </ul>
 
-            </div>
+            </div >
         </div >
     );
 }

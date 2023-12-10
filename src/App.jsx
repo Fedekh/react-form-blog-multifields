@@ -14,10 +14,7 @@ function App() {
       <main className="mx-auto my-8 max-w-2xl">
         <h1 className='my-4 text-2xl text-red-700'>Registrati al form: </h1>
 
-        <div className="wrapper flex">
-          <Form />
-
-        </div>
+        <Form />
 
       </main>
 
